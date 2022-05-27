@@ -142,33 +142,40 @@ class Board:
                 if (row > my_pos[0]):
                     #vertically down
                     self.__board_state__[row - 1][col] = Board.BLOCKED
+                    self.__board_state__[prev_row + 1][col] = Board.BLOCKED
                 else:
                     #vartically up
                     self.__board_state__[row + 1][col] = Board.BLOCKED
-                
+                    self.__board_state__[prev_row - 1][col] = Board.BLOCKED
             if (row == my_pos[0]):
                 #horizontal move
                 if (col > my_pos[1]):
                     #horizontally right
                     self.__board_state__[row][col-1] = Board.BLOCKED
+                    self.__board_state__[row][prev_col+1] = Board.BLOCKED
                 else:
                     #horizontally left
                     self.__board_state__[row][col+1] = Board.BLOCKED
+                    self.__board_state__[row][prev_col-1] = Board.BLOCKED
                 
             if ((row != my_pos[0]) and (col != my_pos[1])):
                 #diagonal move
                 if ((row > my_pos[0]) and (col > my_pos[1])):
                     #diagonally right down
                     self.__board_state__[row-1][col-1] = Board.BLOCKED
+                    self.__board_state__[prev_row+1][prev_col+1] = Board.BLOCKED
                 if ((row < my_pos[0]) and (col < my_pos[1])):
                     #diagonally left up
                     self.__board_state__[row+1][col+1] = Board.BLOCKED
+                    self.__board_state__[prev_row-1][prev_col-1] = Board.BLOCKED
                 if ((row > my_pos[0]) and (col < my_pos[1])):
                     #diagonally left down
                     self.__board_state__[row-1][col+1] = Board.BLOCKED
+                    self.__board_state__[prev_row+1][prev_col-1] = Board.BLOCKED
                 if ((row < my_pos[0]) and (col > my_pos[1])):
                     #diagonally right up
                     self.__board_state__[row+1][col-1] = Board.BLOCKED
+                    self.__board_state__[prev_row-1][prev_col+1] = Board.BLOCKED
             
         #making the last position of active player blocked
         if (self.__last_queen_move__[self.__active_players_queen__] != Board.NOT_MOVED):
