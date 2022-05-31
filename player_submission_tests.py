@@ -118,7 +118,7 @@ def minimaxTest(yourAgent, minimax_fn):
 
             test_pass = True
 
-            expected_depth_scores = [(1, 4), (2, 1), (3, 2), (4, 1), (5, 0)]
+            expected_depth_scores = [(1, -7), (2, -7), (3, -7), (4, -8), (5, -8)]
 
             for depth, exp_score in expected_depth_scores:
                 move, score = minimax_fn(player, sample_board, time_left, depth=depth, my_turn=False)
