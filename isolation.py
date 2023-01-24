@@ -1,3 +1,4 @@
+from argparse import ArgumentError
 from copy import deepcopy
 import time
 import platform
@@ -20,22 +21,22 @@ class Board:
     TRAIL = "O"
     NOT_MOVED = (-1, -1)
 
+    ###### Not sure why this is necessary ######
+    # __player_1__ = None
+    # __player_2__ = None
+    # __queen_1__ = None
+    # __queen_2__ = None
 
-    __player_1__ = None
-    __player_2__ = None
-    __queen_1__ = None
-    __queen_2__ = None
+    # __active_player__ = None
+    # __inactive_player__ = None
+    # __active_players_queen__ = None
+    # __inactive_players_queen__ = None
 
-    __active_player__ = None
-    __inactive_player__ = None
-    __active_players_queen__ = None
-    __inactive_players_queen__ = None
+    # __last_queen_move__ = {}
+    # __last_queen_symbols__ = {}
 
-    __last_queen_move__ = {}
-    __last_queen_symbols__ = {}
-
-
-    move_count = 0
+    # move_count = 0
+    ###### Not sure why this is necessary ######
 
     def __init__(self, player_1, player_2, width=7, height=7):
         self.width = width
@@ -47,23 +48,23 @@ class Board:
         self.__queen_1__ = player_1.__class__.__name__ + " - Q1"
         self.__queen_2__ = player_2.__class__.__name__ + " - Q2"
 
-        self.__board_state__ = [
-            [Board.BLANK for i in range(0, width)] for j in range(0, height)]
+        self.__queen_symbols__ = {self.__queen_1__: "Q1", self.__queen_2__: "Q2"}
 
-        self.__last_queen_move__ = {
-            self.__queen_1__: Board.NOT_MOVED, self.__queen_2__: Board.NOT_MOVED}
+        self.__board_state__ = [[Board.BLANK for i in range(0, width)] for j in range(0, height)]
 
-        self.__queen_symbols__ = {
-            Board.BLANK: Board.BLANK, self.__queen_1__: "Q1", self.__queen_2__: "Q2"}
+        self.__last_queen_move__ = {self.__queen_1__: Board.NOT_MOVED, self.__queen_2__: Board.NOT_MOVED}
 
         self.__active_player__ = player_1
         self.__inactive_player__ = player_2
         self.__active_players_queen__ = self.__queen_1__
         self.__inactive_players_queen__ = self.__queen_2__
 
-        self.__last_laser_pos__ = []
-
         self.move_count = 0
+
+        ######Impact crater variant only######
+        self.__active_players_crater__ = []
+        self.__inactive_players_crater__ = []
+        ######Impact crater variant only######
 
     def get_state(self):
         """
@@ -75,7 +76,8 @@ class Board:
         """
         return deepcopy(self.__board_state__)
 
-    def set_state(self, board_state, p1_turn=True):
+    #active_crater and inactive_crater for impact crater variant only
+    def set_state(self, board_state, p1_turn=True, active_crater = [], inactive_crater = []):
         '''
         Function to immediately bring a board to a desired state. Useful for testing purposes; call board.play_isolation() afterwards to play
         Parameters:
@@ -86,16 +88,22 @@ class Board:
         '''
         self.__board_state__ = board_state
 
-        last_move_q1 = [(column, row.index("Q1")) for column, row in enumerate(board_state) if "Q1" in row]
-        if (last_move_q1 != []):
+        queen_1_symbol = self.__queen_symbols__[self.__queen_1__]
+        last_move_q1 = [(column, row.index(queen_1_symbol)) for column, row in enumerate(board_state) if queen_1_symbol in row]
+        if last_move_q1 != []:
             # set last move to the first found occurance of 'Q1'
             self.__last_queen_move__[self.__queen_1__] = last_move_q1[0]
+        else:
+            self.__last_queen_move__[self.__queen_1__] = Board.NOT_MOVED
 
-        last_move_q2 = [(column, row.index("Q2")) for column, row in enumerate(board_state) if "Q2" in row]
-        if (last_move_q2 != []):
+        queen_2_symbol = self.__queen_symbols__[self.__queen_2__]
+        last_move_q2 = [(column, row.index(queen_2_symbol)) for column, row in enumerate(board_state) if queen_2_symbol in row]
+        if last_move_q2 != []:
             self.__last_queen_move__[self.__queen_2__] = last_move_q2[0]
+        else:
+            self.__last_queen_move__[self.__queen_2__] = Board.NOT_MOVED
 
-        if (p1_turn):
+        if p1_turn:
             self.__active_player__ = self.__player_1__
             self.__active_players_queen__ = self.__queen_1__
             self.__inactive_player__ = self.__player_2__
@@ -109,84 +117,59 @@ class Board:
         # Count X's to get move count + 2 for initial moves
         self.move_count = sum(row.count('X') + row.count('Q1') + row.count('Q2') for row in board_state)
 
-    #function to edit to introduce any variant - edited for skid variant by Aoun Hussain (1/28/2022)
+        ###### Impact crater variant only ######
+        if active_crater != []:
+            active_last_move = self.__last_queen_move__[self.__active_players_queen__]
+            if active_last_move == Board.NOT_MOVED:
+                raise ValueError("Active player crater not in valid position")
+            for col, row in active_crater:
+                if abs(active_last_move[0] - col) + abs(active_last_move[1] - row) > 1:
+                    raise ValueError("Active player crater not in valid position")
+        if inactive_crater != []:
+            inactive_last_move = self.__last_queen_move__[self.__inactive_players_queen__]
+            if inactive_last_move == Board.NOT_MOVED:
+                raise ValueError("Inactive player crater not in valid position")
+            for col, row in inactive_crater:
+                if abs(inactive_last_move[0] - col) + abs(inactive_last_move[1] - row) > 1:
+                    raise ValueError("Inactive player crater not in valid position")
+        self.__active_players_crater__ = active_crater
+        self.__inactive_players_crater__ = inactive_crater
+        ###### Impact crater variant only ######
+
+    #function to edit to introduce any variant - edited for impact crater variant by Matthew Zhou (1/23/2023)
     def __apply_move__(self, queen_move):
         '''
         Apply chosen move to a board state and check for game end
         Parameters:
             queen_move: (int, int), Desired move to apply. Takes the 
-            form of (row, column).
+            form of (column, row). Move must be legal.
         Returns:
             result: (bool, str), Game Over flag, winner 
         '''
         # print("Applying move:: ", queen_move)
-        row, col = queen_move
+        col, row = queen_move
         my_pos = self.__last_queen_move__[self.__active_players_queen__]
-        opponent_pos = self.__last_queen_move__[self.__inactive_players_queen__]
+        #opponent_pos = self.__last_queen_move__[self.__inactive_players_queen__]
 
         ######Change the following lines to introduce any variant######
-        
-        queen_name = self.__queen_symbols__[self.__active_players_queen__]
-        #self.__clear_laser__()   #no laser in this variant
-   
-        if self.move_is_in_board(my_pos[0], my_pos[1]):
-            #self.__board_state__[my_pos[0]][my_pos[1]] = Board.BLOCKED  #last position should not be blocked in skid variant
-            #self.__create_laser__(queen_move, my_pos)                   #no laser in this variant
-            
-            #second to last position is blocked and no laser is present
-            curr_row, curr_col  = row, col
-            prev_row, prev_col  = my_pos[0], my_pos[1]
-            
-            if (col == my_pos[1]):
-                #vertical move
-                if (row > my_pos[0]):
-                    #vertically down
-                    self.__board_state__[row - 1][col] = Board.BLOCKED
-                    self.__board_state__[prev_row + 1][col] = Board.BLOCKED
-                else:
-                    #vartically up
-                    self.__board_state__[row + 1][col] = Board.BLOCKED
-                    self.__board_state__[prev_row - 1][col] = Board.BLOCKED
-            if (row == my_pos[0]):
-                #horizontal move
-                if (col > my_pos[1]):
-                    #horizontally right
-                    self.__board_state__[row][col-1] = Board.BLOCKED
-                    self.__board_state__[row][prev_col+1] = Board.BLOCKED
-                else:
-                    #horizontally left
-                    self.__board_state__[row][col+1] = Board.BLOCKED
-                    self.__board_state__[row][prev_col-1] = Board.BLOCKED
-                
-            if ((row != my_pos[0]) and (col != my_pos[1])):
-                #diagonal move
-                if ((row > my_pos[0]) and (col > my_pos[1])):
-                    #diagonally right down
-                    self.__board_state__[row-1][col-1] = Board.BLOCKED
-                    self.__board_state__[prev_row+1][prev_col+1] = Board.BLOCKED
-                if ((row < my_pos[0]) and (col < my_pos[1])):
-                    #diagonally left up
-                    self.__board_state__[row+1][col+1] = Board.BLOCKED
-                    self.__board_state__[prev_row-1][prev_col-1] = Board.BLOCKED
-                if ((row > my_pos[0]) and (col < my_pos[1])):
-                    #diagonally left down
-                    self.__board_state__[row-1][col+1] = Board.BLOCKED
-                    self.__board_state__[prev_row+1][prev_col-1] = Board.BLOCKED
-                if ((row < my_pos[0]) and (col > my_pos[1])):
-                    #diagonally right up
-                    self.__board_state__[row+1][col-1] = Board.BLOCKED
-                    self.__board_state__[prev_row-1][prev_col+1] = Board.BLOCKED
-            
-        #making the last position of active player blocked
-        if (self.__last_queen_move__[self.__active_players_queen__] != Board.NOT_MOVED):
+        # clear active player's previous crater
+        self.__clear_crater__()
+
+        if my_pos != Board.NOT_MOVED:
             self.__board_state__[my_pos[0]][my_pos[1]] = Board.BLOCKED
         
+            #check if queen moves more than 1 space in any direction
+            if abs(col - my_pos[0]) > 1 or abs(row - my_pos[1]) > 1:
+                self.__create_crater__(queen_move)
+
+        # rotate the craters
+        self.__active_players_crater__, self.__inactive_players_crater__ = self.__inactive_players_crater__, self.__active_players_crater__
         ######Change above lines to introduce any variant######
         
         
         # apply move of active player
         self.__last_queen_move__[self.__active_players_queen__] = queen_move
-        self.__board_state__[row][col] = self.__queen_symbols__[self.__active_players_queen__]
+        self.__board_state__[col][row] = self.__queen_symbols__[self.__active_players_queen__]
 
         # If opponent is isolated
         if not self.get_inactive_moves():
@@ -203,59 +186,41 @@ class Board:
 
         return False, None
 
-    #function not needed for skid variant - not used
-    def __create_laser__(self, current_position, previous_position):
-        """
-        Creates a laser between the previous and current position of the player
+    #function for impact crater variant only
+    def __create_crater__(self, queen_move):
+        '''
+        Create impact crater - 4 spaces (vertical, horizontal) adjacent to move
         Parameters:
-            current_position: (int, int) Current Row and Column position of the player
-            previous_position: (int, int) Previous Row and Column position of the player
+            queen_move: (int, int), Desired move to apply. Takes the 
+            form of (column, row).
         Returns:
             None
-        """
+        '''
+        col, row = queen_move
+        impact_crater = [(col - 1, row), (col, row - 1), (col, row + 1), (col + 1, row)]
+        for adj_col, adj_row in impact_crater:
+            if self.move_is_in_board(adj_col, adj_row):
+                if self.__board_state__[adj_col][adj_row] == Board.BLANK or (adj_col, adj_row) in self.__inactive_players_crater__:
+                    self.__board_state__[adj_col][adj_row] = Board.TRAIL
+                    self.__active_players_crater__.append((adj_col, adj_row))
 
-        curr_row, curr_col  = current_position
-        prev_row, prev_col  = previous_position
-        vertical_iterator = 1
-        horizontal_iterator = 1
+    #function for impact crater variant only
+    def __clear_crater__(self):
+        '''
+        Clear's crater of active player when move is made
+        Parameters:
+            None
+        Returns:
+            None
+        '''
+        if len(self.__active_players_crater__) == 0:
+            return
 
-        if curr_row < prev_row:
-            horizontal_iterator = -1
-        if curr_col < prev_col:
-            vertical_iterator = -1
+        for col, row in self.__active_players_crater__:
+            if (col, row) not in self.__inactive_players_crater__:
+                self.__board_state__[col][row] = Board.BLANK
 
-        if curr_col == prev_col:
-            # vertical move
-            row = prev_row + horizontal_iterator
-            while row != curr_row:
-                self.__last_laser_pos__.append((row, curr_col))
-                self.__board_state__[row][curr_col] = Board.TRAIL
-                row = row + horizontal_iterator
-
-        elif curr_row == prev_row:
-            # horizontal move
-            col = prev_col + vertical_iterator
-            while col != curr_col:
-                self.__last_laser_pos__.append((curr_row, col))
-                self.__board_state__[curr_row][col] = Board.TRAIL
-                col = col + vertical_iterator
-        else:
-            # diagonal move
-            col = prev_col
-            row = prev_row
-
-            while col != curr_col and row != curr_row:
-                col = col + vertical_iterator
-                row = row + horizontal_iterator
-                if self.__board_state__[row][col] == Board.BLANK and (row, col) != self.get_inactive_position() and (
-                        row, col) != (curr_row, curr_col):
-                    self.__last_laser_pos__.append((row, col))
-                    self.__board_state__[row][col] = Board.TRAIL
-
-                # if self.__board_state__[row][col] == Board.BLANK and (row, col) != self.get_inactive_position() and (
-                #         row, col) != (curr_row, curr_col):
-                #     self.__last_laser_pos__.append((row, col))
-                #     self.__board_state__[row][col] = Board.TRAIL
+        self.__active_players_crater__ = []
 
     def copy(self):
         '''
@@ -272,13 +237,17 @@ class Board:
         for key, value in self.__queen_symbols__.items():
             b.__queen_symbols__[key] = value
             
-        b.__last_laser_pos__ = deepcopy(self.__last_laser_pos__)
-        b.move_count = self.move_count
+        b.__board_state__ = self.get_state()
         b.__active_player__ = self.__active_player__
         b.__inactive_player__ = self.__inactive_player__
         b.__active_players_queen__ = self.__active_players_queen__
         b.__inactive_players_queen__ = self.__inactive_players_queen__
-        b.__board_state__ = self.get_state()
+        b.move_count = self.move_count
+
+        ###### Impact crater variant only ######
+        b.__active_players_crater__ = self.__active_players_crater__.copy()
+        b.__inactive_players_crater__ = self.__inactive_players_crater__.copy()
+        ###### Impact crater variant only ######
         return b
 
     def forecast_move(self, queen_move):
@@ -286,7 +255,7 @@ class Board:
         See what board state would result from making a particular move without changing the board state itself.
         Parameters:
             queen_move: (int, int), Desired move to forecast. Takes the form of
-            (row, column).
+            (column, row).
 
         Returns:
             (Board, bool, str): Resultant board from move, flag for game-over, winner (if game is over)
@@ -337,22 +306,22 @@ class Board:
 
     def get_inactive_position(self):
         """
-        Get position of inactive player (player waiting for opponent to make move) in [row, column] format
+        Get position of inactive player (player waiting for opponent to make move) in [column, row] format
         Parameters:
             None
         Returns:
-           [int, int]: [row,col] of inactive player
+           [int, int]: [col, row] of inactive player
         """
         return self.__last_queen_move__[
                    self.__inactive_players_queen__][0:2]
 
     def get_active_position(self):
         """
-        Get position of active player (player actively making move) in [row, column] format
+        Get position of active player (player actively making move) in [column, row] format
         Parameters:
             None
         Returns:
-           [int, int]: [row,col] of inactive player
+           [int, int]: [col, row] of active player
         """
         return self.__last_queen_move__[
                    self.__active_players_queen__][0:2]
@@ -364,7 +333,7 @@ class Board:
             my_player (Player), Player to get position for
             If calling from within a player class, my_player = self can be passed.
         returns
-            [int, int]: [Row, Col] position of player
+            [int, int]: [col, row] position of player
 
         """
         if (my_player == self.__player_1__ and self.__active_player__ == self.__player_1__):
@@ -385,7 +354,7 @@ class Board:
             my_player (Player), Player to get opponent's position
             If calling from within a player class, my_player = self can be passed.
         returns
-            [int, int]: [Row, col] position of my_player's opponent
+            [int, int]: [col, row] position of my_player's opponent
 
         """
         if (my_player == self.__player_1__ and self.__active_player__ == self.__player_1__):
@@ -406,7 +375,7 @@ class Board:
             None
         Returns:
            [(int, int)]: List of all legal moves. Each move takes the form of
-            (row, column).
+            (column, row).
         """
         q_move = self.__last_queen_move__[
             self.__inactive_players_queen__]
@@ -420,7 +389,7 @@ class Board:
             None
         Returns:
            [(int, int)]: List of all legal moves. Each move takes the form of
-            (row, column).
+            (column, row).
         """
         q_move = self.__last_queen_move__[
             self.__active_players_queen__]
@@ -436,7 +405,7 @@ class Board:
             If calling from within a player class, my_player = self can be passed.
         returns
             [(int, int)]: List of all legal moves. Each move takes the form of
-            (row, column).
+            (column, row).
 
         """
         if (my_player == self.__player_1__ and self.__active_player__ == self.__player_1__):
@@ -459,7 +428,7 @@ class Board:
             If calling from within a player class, my_player = self can be passed.
         returns
             [(int, int)]: List of all opponent's moves. Each move takes the form of
-            (row, column).
+            (column, row).
 
         """
         if (my_player == self.__player_1__ and self.__active_player__ == self.__player_1__):
@@ -479,16 +448,16 @@ class Board:
         use get_active_moves or get_inactive_moves instead.
         Parameters:
             move: (int, int), Last move made by player in question (where they currently are). 
-            Takes the form of (row, column).
+            Takes the form of (column, row).
         Returns:
            [(int, int)]: List of all legal moves. Each move takes the form of
-            (row, column).
+            (column, row).
         """
 
         if move == self.NOT_MOVED:
             return self.get_first_moves()
 
-        r, c = move
+        c, r = move
 
         directions = [(-1, -1), (-1, 0), (-1, 1),
                       (0, -1), (0, 1),
@@ -498,10 +467,10 @@ class Board:
 
         for direction in directions:
             for dist in range(1, max(self.height, self.width)):
-                row = direction[0] * dist + r
-                col = direction[1] * dist + c
-                if self.move_is_in_board(row, col) and self.is_spot_open(row, col) and (row, col) not in moves:
-                    moves.append((row, col))
+                col = direction[0] * dist + c
+                row = direction[1] * dist + r
+                if self.move_is_in_board(col, row) and self.is_spot_open(col, row) and (col, row) not in moves:
+                    moves.append((col, row))
 
                 else:
                     break
@@ -515,59 +484,59 @@ class Board:
             None
         Returns:
            [(int, int)]: List of all legal moves. Each move takes the form of
-            (row, column).
+            (column, row).
         """
         return [(i, j) for i in range(0, self.height)
                 for j in range(0, self.width) if self.__board_state__[i][j] == Board.BLANK]
 
-    def move_is_in_board(self, row, col):
+    def move_is_in_board(self, col, row):
         """
         Sanity check for making sure a move is within the bounds of the board.
         Parameters:
-            row: int, Row position of move in question
             col: int, Column position of move in question
+            row: int, Row position of move in question
         Returns:
-            bool: Whether the [row,col] values are within valid ranges
+            bool: Whether the [col, row] values are within valid ranges
         """
-        return 0 <= row < self.height and 0 <= col < self.width
+        return 0 <= col < self.height and 0 <= row < self.width
 
-    def is_spot_open(self, row, col):
+    def is_spot_open(self, col, row):
         """
         Sanity check for making sure a move isn't occupied by an X.
         Parameters:
-            row: int, Row position of move in question
             col: int, Column position of move in question
+            row: int, Row position of move in question
         Returns:
-            bool: Whether the [row,col] position is blank (no X)
+            bool: Whether the [col, row] position is blank (no X)
         """
-        return self.__board_state__[row][col] == Board.BLANK
+        return self.__board_state__[col][row] == Board.BLANK
 
-    def is_spot_queen(self, row, col):
+    def is_spot_queen(self, col, row):
         """
         Sanity check for checking if a spot is occupied by a player
         Parameters:
-            row: int, Row position of move in question
             col: int, Column position of move in question
+            row: int, Row position of move in question
         Returns:
-            bool: Whether the [row,col] position is currently occupied by a player's queen
+            bool: Whether the [col, row] position is currently occupied by a player's queen
         """
         q1 = self.__queen_symbols__[self.__active_players_queen__]
         q2 = self.__queen_symbols__[self.__inactive_players_queen__]
-        return self.__board_state__[row][col] == q1 or self.__board_state__[row][col] == q2
+        return self.__board_state__[col][row] == q1 or self.__board_state__[col][row] == q2
 
 
-    def space_is_open(self, row, col):
+    def space_is_open(self, col, row):
         """
         Sanity check to see if a space is within the bounds of the board and blank. Not meant to be called directly if you don't know what 
         you're looking for.
         Parameters:
-            row: int, Row value of desired space
             col: int, Col value of desired space
+            row: int, Row value of desired space
         Returns:
-            bool: (Row, Col ranges are valid) AND (space is blank)
+            bool: (Col, Row ranges are valid) AND (space is blank)
         """
-        return 0 <= row < self.height and \
-               0 <= col < self.width and \
+        return 0 <= col < self.height and \
+               0 <= row < self.width and \
                self.__board_state__[row][col] == Board.BLANK
 
     def print_board(self, legal_moves=[]):
@@ -575,13 +544,13 @@ class Board:
         Function for printing board state & indicating possible moves for active player.
         Parameters:
             legal_moves: [(int, int)], List of legal moves to indicate when printing board spaces. 
-            Each move takes the form of (row, column).
+            Each move takes the form of (column, row).
         Returns:
             Str: Visual interpretation of board state & possible moves for active player
         """
 
-        p1_r, p1_c = self.__last_queen_move__[self.__queen_1__]
-        p2_r, p2_c = self.__last_queen_move__[self.__queen_2__]
+        p1_c, p1_r = self.__last_queen_move__[self.__queen_1__]
+        p2_c, p2_r = self.__last_queen_move__[self.__queen_2__]
         b = self.__board_state__
 
         out = '  |'
@@ -592,16 +561,16 @@ class Board:
         for i in range(len(b)):
             out += str(i) + ' |'
             for j in range(len(b[i])):
-                if (i, j) == (p1_r, p1_c):
+                if (i, j) == (p1_c, p1_r):
                     out += self.__queen_symbols__[self.__queen_1__]
-                elif (i, j) == (p2_r, p2_c):
+                elif (i, j) == (p2_c, p2_r):
                     out += self.__queen_symbols__[self.__queen_2__]
                 elif (i, j) in legal_moves or (j, i) in legal_moves:
                     out += 'o '
                 if b[i][j] == Board.BLANK:
                     out += '  '
-                #elif b[i][j] == Board.TRAIL:    #no trail in skid variant
-                #    out += '- '
+                elif b[i][j] == Board.TRAIL:    
+                   out += '- '
                 if b[i][j] == Board.BLOCKED:   #changed for skid variant
                     out += '><'
                 out += '|'
@@ -619,7 +588,7 @@ class Board:
             print_moves: bool, Should the method print details of the game in real time
         Returns:
             (str, [(int, int)], str): Queen of Winner, Move history, Reason for game over.
-            Each move in move history takes the form of (row, column).
+            Each move in move history takes the form of (column, row).
         """
         move_history = []
 
@@ -681,7 +650,7 @@ class Board:
         for analyzing an already played game.
         Parameters: 
             move_queen: (int, int), Move to apply to board. Takes
-            the form of (row, column).
+            the form of (column, row).
         Returns:
             None
         """
@@ -689,12 +658,12 @@ class Board:
         if move_queen[0] is None or move_queen[1] is None:
             return
 
-        row, col = move_queen
+        col, row = move_queen
         my_pos = self.__last_queen_move__[self.__active_players_queen__]
         opponent_pos = self.__last_queen_move__[self.__inactive_players_queen__]
 
         self.__last_queen_move__[self.__active_players_queen__] = move_queen
-        self.__board_state__[row][col] = \
+        self.__board_state__[col][row] = \
             self.__queen_symbols__[self.__active_players_queen__]
 
         if self.move_is_in_board(my_pos[0], my_pos[1]):
@@ -712,29 +681,13 @@ class Board:
 
         self.move_count = self.move_count + 1
 
-    #this function not needed for skid variantc - not used
-    def __clear_laser__(self):
-        """
-        Clears the laser made in the previous move
-        Parameters:
-            None
-        Returns:
-            None
-        """
-        if len(self.__last_laser_pos__) == 0:
-            return
-
-        for pos in self.__last_laser_pos__:
-            self.__board_state__[pos[0]][pos[1]] = Board.BLANK
-
-        self.__last_laser_pos__ = []
 
 def game_as_text(winner, move_history, termination="", board=Board(1, 2)):
     """
     Function to play out a move history on a new board. Used for analyzing an interesting move history 
     Parameters: 
         move_history: [(int, int)], History of all moves in order of game in question. 
-        Each move takes the form of (row, column).
+        Each move takes the form of (column, row).
         termination: str, Reason for game over of game in question. Obtained from play_isolation
         board: Board, board that game in question was played on. Used to initialize board copy
     Returns:
