@@ -21,7 +21,7 @@ class Board:
     TRAIL = "O"
     NOT_MOVED = (-1, -1)
 
-    def __init__(self, player_1, player_2, width=7, height=7):
+    def __init__(self, player_1, player_2, width=9, height=9):
         self.width = width
         self.height = height
 
