@@ -21,23 +21,6 @@ class Board:
     TRAIL = "O"
     NOT_MOVED = (-1, -1)
 
-    ###### Not sure why this is necessary ######
-    # __player_1__ = None
-    # __player_2__ = None
-    # __queen_1__ = None
-    # __queen_2__ = None
-
-    # __active_player__ = None
-    # __inactive_player__ = None
-    # __active_players_queen__ = None
-    # __inactive_players_queen__ = None
-
-    # __last_queen_move__ = {}
-    # __last_queen_symbols__ = {}
-
-    # move_count = 0
-    ###### Not sure why this is necessary ######
-
     def __init__(self, player_1, player_2, width=7, height=7):
         self.width = width
         self.height = height
@@ -61,11 +44,6 @@ class Board:
 
         self.move_count = 0
 
-        ######Impact crater variant only######
-        self.__active_players_crater__ = []
-        self.__inactive_players_crater__ = []
-        ######Impact crater variant only######
-
     def get_state(self):
         """
         Get physical board state
@@ -76,8 +54,7 @@ class Board:
         """
         return deepcopy(self.__board_state__)
 
-    #active_crater and inactive_crater for impact crater variant only
-    def set_state(self, board_state, p1_turn=True, active_crater = [], inactive_crater = []):
+    def set_state(self, board_state, p1_turn=True):
         '''
         Function to immediately bring a board to a desired state. Useful for testing purposes; call board.play_isolation() afterwards to play
         Parameters:
@@ -117,25 +94,6 @@ class Board:
         # Count X's to get move count + 2 for initial moves
         self.move_count = sum(row.count('X') + row.count('Q1') + row.count('Q2') for row in board_state)
 
-        ###### Impact crater variant only ######
-        if active_crater != []:
-            active_last_move = self.__last_queen_move__[self.__active_players_queen__]
-            if active_last_move == Board.NOT_MOVED:
-                raise ValueError("Active player crater not in valid position")
-            for col, row in active_crater:
-                if abs(active_last_move[0] - col) + abs(active_last_move[1] - row) > 1:
-                    raise ValueError("Active player crater not in valid position")
-        if inactive_crater != []:
-            inactive_last_move = self.__last_queen_move__[self.__inactive_players_queen__]
-            if inactive_last_move == Board.NOT_MOVED:
-                raise ValueError("Inactive player crater not in valid position")
-            for col, row in inactive_crater:
-                if abs(inactive_last_move[0] - col) + abs(inactive_last_move[1] - row) > 1:
-                    raise ValueError("Inactive player crater not in valid position")
-        self.__active_players_crater__ = active_crater
-        self.__inactive_players_crater__ = inactive_crater
-        ###### Impact crater variant only ######
-
     #function to edit to introduce any variant - edited for impact crater variant by Matthew Zhou (1/23/2023)
     def __apply_move__(self, queen_move):
         '''
@@ -152,20 +110,13 @@ class Board:
         #opponent_pos = self.__last_queen_move__[self.__inactive_players_queen__]
 
         ######Change the following lines to introduce any variant######
-        # clear active player's previous crater
-        self.__clear_crater__()
-
         if my_pos != Board.NOT_MOVED:
             self.__board_state__[my_pos[0]][my_pos[1]] = Board.BLOCKED
         
             #check if queen moves more than 1 space in any direction
             if abs(col - my_pos[0]) > 1 or abs(row - my_pos[1]) > 1:
                 self.__create_crater__(queen_move)
-
-        # rotate the craters
-        self.__active_players_crater__, self.__inactive_players_crater__ = self.__inactive_players_crater__, self.__active_players_crater__
-        ######Change above lines to introduce any variant######
-        
+       ######Change above lines to introduce any variant######
         
         # apply move of active player
         self.__last_queen_move__[self.__active_players_queen__] = queen_move
@@ -200,27 +151,8 @@ class Board:
         impact_crater = [(col - 1, row), (col, row - 1), (col, row + 1), (col + 1, row)]
         for adj_col, adj_row in impact_crater:
             if self.move_is_in_board(adj_col, adj_row):
-                if self.__board_state__[adj_col][adj_row] == Board.BLANK or (adj_col, adj_row) in self.__inactive_players_crater__:
-                    self.__board_state__[adj_col][adj_row] = Board.TRAIL
-                    self.__active_players_crater__.append((adj_col, adj_row))
-
-    #function for impact crater variant only
-    def __clear_crater__(self):
-        '''
-        Clear's crater of active player when move is made
-        Parameters:
-            None
-        Returns:
-            None
-        '''
-        if len(self.__active_players_crater__) == 0:
-            return
-
-        for col, row in self.__active_players_crater__:
-            if (col, row) not in self.__inactive_players_crater__:
-                self.__board_state__[col][row] = Board.BLANK
-
-        self.__active_players_crater__ = []
+                if self.__board_state__[adj_col][adj_row] == Board.BLANK:
+                    self.__board_state__[adj_col][adj_row] = Board.BLOCKED
 
     def copy(self):
         '''
@@ -244,10 +176,6 @@ class Board:
         b.__inactive_players_queen__ = self.__inactive_players_queen__
         b.move_count = self.move_count
 
-        ###### Impact crater variant only ######
-        b.__active_players_crater__ = self.__active_players_crater__.copy()
-        b.__inactive_players_crater__ = self.__inactive_players_crater__.copy()
-        ###### Impact crater variant only ######
         return b
 
     def forecast_move(self, queen_move):
