@@ -1,4 +1,4 @@
-# Assignment 2 - Skid Isolation
+# Assignment 2 - Impact Isolation
 
 This assignment will cover some of the concepts discussed in the Adversarial Search lectures. You will be implementing game playing agents for a variant of the game Isolation.
 
@@ -30,10 +30,11 @@ conda activate ai_env
 
 In case you used a different environment name, to list of all environments you have on your machine you can run `conda env list`.
 
-Install additional package that will be used to for visualising the game board.
+Install correct package versions that will be used to for visualising the game board.
 
 ```
-pip install ipywidgets==7.5.0
+cd assignment_2
+pip install -r -requirements.txt
 ```
 
 <a name="jupyter"/></a>
