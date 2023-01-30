@@ -45,13 +45,13 @@ def notebook2scriptSingle(fname, destination):
 LATE_POLICY = \
     """Late Policy:
     
-      \"I have read the late policy for CS6601.\"
+      \"I have read the late policy for CS3600/6601.\"
     """
 
 HONOR_PLEDGE = \
     """Honor Pledge:
     
-      \"I have read the Collaboration and Academic Honesty policy for CS6601.
+      \"I have read the Collaboration and Academic Honesty policy for CS3600/6601.
       I certify that I have or will use outside references only in accordance with
       this policy, that I have or will cite any such references via code comments,
       and that I have not or will not copy any portion of my submission from another
