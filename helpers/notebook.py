@@ -1,4 +1,4 @@
-def play(Q1, Q2, size=7, time_limit=6000, print_moves=True, seed=None):
+def play(Q1, Q2, size=9, time_limit=6000, print_moves=True, seed=None):
     """
         Args:
             Q1: Player 1
@@ -30,3 +30,4 @@ def play(Q1, Q2, size=7, time_limit=6000, print_moves=True, seed=None):
     print("\n", winner, " has won. Reason: ", termination)
     lock.release()
     return winner, move_history, termination
+
