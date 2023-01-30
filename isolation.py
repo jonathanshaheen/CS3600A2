@@ -122,9 +122,6 @@ class Board:
         self.__last_queen_move__[self.__active_players_queen__] = queen_move
         self.__board_state__[col][row] = self.__queen_symbols__[self.__active_players_queen__]
 
-        # If opponent is isolated
-        if not self.get_inactive_moves():
-            return True, self.__active_players_queen__
 
         # rotate the players
         self.__active_player__, self.__inactive_player__ = self.__inactive_player__, self.__active_player__
@@ -134,6 +131,10 @@ class Board:
 
         # increment move count
         self.move_count = self.move_count + 1
+
+        # If opponent is isolated
+        if not self.get_active_moves():
+            return True, self.__inactive_players_queen__
 
         return False, None
 
@@ -566,11 +567,13 @@ class Board:
                 print(self.copy().print_board())
 
             if is_over:
-                if not self.get_inactive_moves():
-                    return self.__active_players_queen__, move_history, \
-                           (self.__inactive_players_queen__ + " has no legal moves left.")
-                return self.__active_players_queen__, move_history, \
-                       (self.__inactive_players_queen__ + " was forced off the grid.")
+                return self.__inactive_players_queen__, move_history, \
+                    self.__active_players_queen__ + " has no legal moves left."
+                # if not self.get_active_moves():
+                #     return self.__active_players_queen__, move_history, \
+                #            (self.__inactive_players_queen__ + " has no legal moves left.")
+                # return self.__active_players_queen__, move_history, \
+                #        (self.__inactive_players_queen__ + " was forced off the grid.")
        
     def __apply_move_write__(self, move_queen):
         """
