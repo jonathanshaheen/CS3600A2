@@ -34,7 +34,7 @@ Install correct package versions that will be used to for visualising the game b
 
 ```
 cd assignment_2
-pip install -r -requirements.txt
+pip install -r requirements.txt
 ```
 
 <a name="jupyter"/></a>
