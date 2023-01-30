@@ -15,13 +15,15 @@ def correctOpenEvalFn(yourOpenEvalFn):
         sample_board = Board(RandomPlayer(), RandomPlayer())
         # setting up the board as though we've been playing
         board_state = [
-            ["Q1", " ", " ", " ", " ", " ", " "],
-            [" ", " ", " ", " ", " ", " ", " "],
-            [" ", " ", " ", " ", " ", " ", " "],
-            [" ", " ", " ", "Q2", " ", " ", " "],
-            [" ", " ", " ", " ", " ", " ", " "],
-            [" ", " ", " ", " ", " ", " ", " "],
-            [" ", " ", " ", " ", " ", " ", " "]
+            ["Q1", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", "Q2", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "]     
         ]
         sample_board.set_state(board_state, True)
         #test = sample_board.get_legal_moves()
@@ -45,7 +47,7 @@ def beatRandom(yourAgent):
     try:
         r = RandomPlayer()
         p = yourAgent()
-        game = Board(r, p, 7, 7)
+        game = Board(r, p, 9, 9)
         output_b = game.copy()
         winner, move_history, termination = game.play_isolation(time_limit=1000, print_moves=True)
         print("\n", winner, " has won. Reason: ", termination)
