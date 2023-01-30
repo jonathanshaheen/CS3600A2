@@ -80,7 +80,7 @@ def create_board_gridbox(game, show_legal_moves, click_callback=None):
 class InteractiveGame():
     """This class is used to play the game interactively (only works in jupyter)"""
     def __init__(self, opponent=None, show_legal_moves=False):
-        self.game = Board(Player, opponent)
+        self.game = Board(Player(), opponent)
         self.width = self.game.width
         self.height = self.game.height
         self.show_legal_moves = show_legal_moves
@@ -108,17 +108,12 @@ class InteractiveGame():
 
         if self.game_is_over:
             return print('The game is over!')
-        ### swap move workaround ###
-        # find if current location is in the legal moves
-        # legal_moves is of length 1 if move exists, and len 0 if move is illegal
-        legal_moves = [(x,y) for x,y in self.game.get_active_moves() if (x,y) == (b.x, b.y)]
-        if not legal_moves:
+
+        move = (b.x, b.y)
+        if move not in self.game.get_active_moves():
             print(f"move {(b.x, b.y)} is illegal!")
             return
-        else:
-            # there is only one move in swap isolation game
-            move = legal_moves[0] 
-        ### swap move workaround end ###
+
         self.game_is_over, winner = self.game.__apply_move__(move)
         if (not self.game_is_over) and (self.opponent is not None):
             opponents_legal_moves = self.game.get_active_moves()

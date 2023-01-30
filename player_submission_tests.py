@@ -15,13 +15,15 @@ def correctOpenEvalFn(yourOpenEvalFn):
         sample_board = Board(RandomPlayer(), RandomPlayer())
         # setting up the board as though we've been playing
         board_state = [
-            ["Q1", " ", " ", " ", " ", " ", " "],
-            [" ", " ", " ", " ", " ", " ", " "],
-            [" ", " ", " ", " ", " ", " ", " "],
-            [" ", " ", " ", "Q2", " ", " ", " "],
-            [" ", " ", " ", " ", " ", " ", " "],
-            [" ", " ", " ", " ", " ", " ", " "],
-            [" ", " ", " ", " ", " ", " ", " "]
+            ["Q1", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", "Q2", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+            [" ", " ", " ", " ", " ", " ", " ", " ", " "]     
         ]
         sample_board.set_state(board_state, True)
         #test = sample_board.get_legal_moves()
@@ -45,7 +47,7 @@ def beatRandom(yourAgent):
     try:
         r = RandomPlayer()
         p = yourAgent()
-        game = Board(r, p, 7, 7)
+        game = Board(p, r, 9, 9)
         output_b = game.copy()
         winner, move_history, termination = game.play_isolation(time_limit=1000, print_moves=True)
         print("\n", winner, " has won. Reason: ", termination)
@@ -68,8 +70,8 @@ def minimaxTest(yourAgent, minimax_fn):
     Especially important to check alphabeta
     pruning"""
 
-    # create dummy 5x5 board
-    print("Now running the Minimax test.")
+    # create dummy 9x9 board
+    print("Now running Minimax test 1.")
     print()
     try:
         def time_left():  # For these testing purposes, let's ignore timeouts
@@ -79,19 +81,21 @@ def minimaxTest(yourAgent, minimax_fn):
         sample_board = Board(player, RandomPlayer())
         # setting up the board as though we've been playing
         board_state = [
-            [" ", "X", "X", " ", "X", "X", " "],
-            [" ", " ", "X", " ", " ", "X", " "],
-            ["X", " ", " ", " ", " ", "Q1"," "],
-            [" ", "X", "X", "Q2","X", " ", " "],
-            ["X", " ", "X", " ", " ", " ", " "],
-            [" ", " ", "X", " ", "X", " ", " "],
-            ["X", " ", "X", " ", " ", " ", " "]
+            [" ", "X", "X", " ", "X", "X", " ", "X", " "],
+            [" ", " ", "X", " ", " ", "X", " ", " ", "X"],
+            ["X", " ", " ", " ", " ", "Q1"," ", " ", " "],
+            [" ", "X", "X", "Q2","X", " ", " ", " ", "X"],
+            ["X", " ", "X", " ", " ", " ", " ", "X", " "],
+            [" ", " ", "X", " ", "X", " ", " ", " ", " "],
+            ["X", " ", "X", " ", " ", " ", " ", "X", "X"],
+            ["X", " ", "X", " ", "X", "X", "X", " ", " "],
+            [" ", "X", " ", " ", "X", "X", "X", "X", "X"]
         ]
         sample_board.set_state(board_state, True)
 
         test_pass = True
 
-        expected_depth_scores = [(1, -2), (2, 0), (3, 3), (4, 4), (5, 1)]
+        expected_depth_scores = [(1, -1), (2, 4), (3, 2), (4, 3), (5, 3)]
         
         for depth, exp_score in expected_depth_scores:
             move, score = minimax_fn(player, sample_board, time_left, depth=depth, my_turn=True)
@@ -102,23 +106,28 @@ def minimaxTest(yourAgent, minimax_fn):
                 print("Minimax passed for depth: ", depth)
 
         if test_pass:
+            print()
+            print("Now running Minimax test 2.")
+            print()
             player = yourAgent()
             sample_board = Board(RandomPlayer(),player)
             # setting up the board as though we've been playing
             board_state = [
-                [" ", " ", " ", " ", "X", " ", "X"],
-                ["X", "X", "X", " ", "X", "Q2", " "],
-                [" ", "X", "X", " ", "X", " ", " "],
-                ["X", " ", "X", " ", "X", "X", " "],
-                ["X", " ", "Q1", " ", "X", " ", "X"],
-                [" ", " ", " ", " ", "X", "X", " "],
-                ["X", " ", " ", " ", " ", " ", " "]
+                [" ", " ", " ", " ", "X", " ", "X", " ", "X"],
+                ["X", "X", "X", " ", "X", "Q2", " ", "X", "X"],
+                [" ", "X", "X", " ", "X", " ", " ", "X", " "],
+                ["X", " ", "X", " ", "X", "X", " ", "X", "X"],
+                ["X", " ", "Q1", " ", "X", " ", "X", " ", " "],
+                [" ", " ", " ", " ", "X", "X", " ", "X", " "],
+                ["X", " ", " ", " ", " ", " ", " ", " ", " "],
+                ["X", "X", " ", " ", "X", " ", "X", "X", "X"],
+                ["X", "X", "X", "X", " ", " ", " ", " ", " "]
             ]
             sample_board.set_state(board_state, p1_turn=True)
 
             test_pass = True
 
-            expected_depth_scores = [(1, -7), (2, -7), (3, -7), (4, -8), (5, -8)]
+            expected_depth_scores = [(1, -10), (2, -8), (3, -9), (4, -10), (5, -10)]
 
             for depth, exp_score in expected_depth_scores:
                 move, score = minimax_fn(player, sample_board, time_left, depth=depth, my_turn=False)
