@@ -49,7 +49,7 @@ def beatRandom(yourAgent):
         p = yourAgent()
         game = Board(p, r, 9, 9)
         output_b = game.copy()
-        winner, move_history, termination = game.play_isolation(time_limit=10000, print_moves=True)
+        winner, move_history, termination = game.play_isolation(time_limit=5000, print_moves=True)
         print("\n", winner, " has won. Reason: ", termination)
         # Uncomment to see game
         # print game_as_text(winner, move_history, termination, output_b)
